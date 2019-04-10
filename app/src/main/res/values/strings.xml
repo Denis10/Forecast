@@ -5,4 +5,5 @@
     <string name="no_data">No data</string>
     <string name="location_permission_required">Location permission is required!</string>
     <string name="location_permission_explanation">App can\'t work without location permission</string>
+    <string name="something_wrong">Somthing went wrong</string>
 </resources>

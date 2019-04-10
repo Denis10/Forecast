@@ -3,6 +3,7 @@ package com.vodolazskiy.forecastapplication.presentation
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -51,6 +52,9 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
             swipeRefreshLayout.post {
                 swipeRefreshLayout?.isRefreshing = it
             }
+        })
+        forecastViewModel.error.observe(this, Observer {
+            Toast.makeText(this, getString(R.string.something_wrong), Toast.LENGTH_SHORT).show()
         })
         if (isLocationPermissionGranted()) {
             forecastViewModel.getForecast()
