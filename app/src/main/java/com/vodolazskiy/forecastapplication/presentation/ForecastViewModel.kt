@@ -27,13 +27,18 @@ class ForecastViewModel @Inject constructor(
         Log.e("ForecastViewModel", "", throwable)
     }
 
-    init {
-        getForecast()
+    fun getForecast() {
+        if (forecasts.value == null) {
+            loadForecast()
+        } else {
+            //receive forecast from LiveData
+        }
     }
 
-    fun getForecast() {
+    fun updateForecast() = loadForecast()
+
+    private fun loadForecast() {
         isLoading.value = true
-        Log.d("Denis", "ForecastViewModel start")
         viewModelScope.launch(uiDispatcher + exceptionHandler) {
             val task = async(bgDispatcher) {
                 forecastUsecase.getForecast()
