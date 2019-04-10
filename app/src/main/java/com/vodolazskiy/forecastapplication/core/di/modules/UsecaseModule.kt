@@ -6,7 +6,9 @@ import dagger.Binds
 import dagger.Module
 import javax.inject.Singleton
 
-@Module
+@Module(includes = [
+    ServiceModule::class
+])
 interface UsecaseModule {
 
     @Singleton

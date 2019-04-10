@@ -2,7 +2,6 @@ package com.vodolazskiy.forecastapplication
 
 import android.app.Activity
 import android.app.Application
-import com.vodolazskiy.forecastapplication.core.di.DI
 import com.vodolazskiy.forecastapplication.core.di.DaggerAppComponent
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
@@ -22,7 +21,6 @@ class ForecastApp : Application(), HasActivityInjector {
             .context(this)
             .build()
         component.inject(this)
-        DI.init(component)
     }
 
     override fun activityInjector(): AndroidInjector<Activity> = dispatchingAndroidInjector

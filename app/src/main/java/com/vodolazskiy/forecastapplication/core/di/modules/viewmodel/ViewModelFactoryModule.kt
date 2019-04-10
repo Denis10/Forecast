@@ -8,10 +8,10 @@ import dagger.Binds
 import dagger.Module
 
 @Module
-abstract class ViewModelModule {
+interface ViewModelFactoryModule {
 
     @Binds
-    internal abstract fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory
+    fun bindViewModelFactory(factory: ViewModelFactory): ViewModelProvider.Factory
 }
 
 inline fun <reified T : ViewModel> FragmentActivity.injectViewModel(factory: ViewModelProvider.Factory): T {
