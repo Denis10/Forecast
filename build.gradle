@@ -25,6 +25,8 @@ buildscript {
         // Tests
         junitVersion = '4.12'
         mockkVersion = '1.9.3'
+        archCoreVersion = '1.1.1'
+        coroutineTestVersion = '1.1.0'
     }
     repositories {
         google()

@@ -1,6 +1,7 @@
 package com.vodolazskiy.forecastapplication.presentation
 
 import android.util.Log
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
@@ -21,7 +22,8 @@ class ForecastViewModel @Inject constructor(
 
     private val forecastsInternal = MutableLiveData<List<ForecastItem>>()
     val forecasts: LiveData<List<ForecastItem>> = forecastsInternal
-    private val isLoadingInternal =
+    @VisibleForTesting
+    val isLoadingInternal =
         MutableLiveData<Boolean>().apply { value = false }
     val isLoading: LiveData<Boolean> = isLoadingInternal
     private val errorInternal = MutableLiveData<Throwable>()
