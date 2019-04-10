@@ -44,6 +44,7 @@ class ForecastViewModel @Inject constructor(
     fun updateForecast() = loadForecast()
 
     private fun loadForecast() {
+        if (isLoadingInternal.value == true) return
         isLoadingInternal.value = true
         viewModelScope.launch(Dispatchers.Main + exceptionHandler) {
             val task = async(Dispatchers.IO) {
