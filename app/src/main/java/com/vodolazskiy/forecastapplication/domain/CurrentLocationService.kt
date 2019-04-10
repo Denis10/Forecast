@@ -9,7 +9,10 @@ import android.os.Looper
 import androidx.core.content.ContextCompat.checkSelfPermission
 import com.google.android.gms.location.*
 import com.vodolazskiy.forecastapplication.domain.exceptions.ServiceError
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
@@ -17,6 +20,7 @@ import kotlin.coroutines.resumeWithException
 private const val UPDATE_INTERVAL = 5000L
 private const val FASTEST_INTERVAL = 5000L
 private const val LOCATION_EXPIRE_TIME: Long = 3600 * 1000
+private const val TIMEOUT = 60_000L
 
 interface CurrentLocationService {
 
@@ -36,17 +40,28 @@ class CurrentLocationServiceImpl @Inject constructor(
         if (!hasLocationPermission(context)) {
             throw ServiceError.NoLocationException()
         }
-        val location = getLastLocation()
-            ?.let {
-                if (Calendar.getInstance().time.time - it.time > LOCATION_EXPIRE_TIME) {
-                    requestLocation()
-                } else {
-                    it
-                }
-            } ?: requestLocation()
-
+        val location = runWithTimeout {
+            getLastLocation()
+                ?.let {
+                    if (Calendar.getInstance().time.time - it.time > LOCATION_EXPIRE_TIME) {
+                        requestLocation()
+                    } else {
+                        it
+                    }
+                } ?: requestLocation()
+        }
 
         return location.latitude to location.longitude
+    }
+
+    private suspend fun <T> runWithTimeout(block: suspend CoroutineScope.() -> T): T {
+        return try {
+            withTimeout(TIMEOUT) {
+                block.invoke(this)
+            }
+        } catch (e: TimeoutCancellationException) {
+            throw ServiceError.NoLocationException(e)
+        }
     }
 
     private fun hasLocationPermission(context: Context) =
