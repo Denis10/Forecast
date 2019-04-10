@@ -65,4 +65,5 @@ dependencies {
 
     //tests
     testImplementation "junit:junit:$rootProject.junitVersion"
+    testImplementation "io.mockk:mockk:$rootProject.mockkVersion"
 }

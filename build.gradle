@@ -24,6 +24,7 @@ buildscript {
 
         // Tests
         junitVersion = '4.12'
+        mockkVersion = '1.9.3'
     }
     repositories {
         google()
