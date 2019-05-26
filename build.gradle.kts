@@ -53,3 +53,9 @@ allprojects {
 tasks.register("clean", Delete::class) {
     delete(rootProject.buildDir)
 }
+
+tasks.register("test", Test::class) {
+    testLogging {
+        events("PASSED", "FAILED", "SKIPPED", "standardOut", "standardError")
+    }
+}
