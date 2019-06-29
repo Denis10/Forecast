@@ -1,9 +1,9 @@
 package com.vodolazskiy.forecastapplication.core.di.modules
 
 import com.vodolazskiy.forecastapplication.domain.CurrentLocationService
-import com.vodolazskiy.forecastapplication.domain.CurrentLocationServiceImpl
 import com.vodolazskiy.forecastapplication.domain.ForecastService
-import com.vodolazskiy.forecastapplication.domain.ForecastServiceImpl
+import com.vodolazskiy.forecastapplication.service.CurrentLocationServiceImpl
+import com.vodolazskiy.forecastapplication.service.ForecastServiceImpl
 import dagger.Binds
 import dagger.Module
 import javax.inject.Singleton
