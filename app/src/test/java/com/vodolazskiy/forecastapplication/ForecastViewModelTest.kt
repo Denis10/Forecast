@@ -1,15 +1,17 @@
 package com.vodolazskiy.forecastapplication
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.lifecycle.Observer
 import com.vodolazskiy.forecastapplication.domain.ForecastUsecase
 import com.vodolazskiy.forecastapplication.domain.entity.Forecast
 import com.vodolazskiy.forecastapplication.domain.entity.ForecastItem
 import com.vodolazskiy.forecastapplication.presentation.ForecastViewModel
 import io.mockk.*
-import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
@@ -22,43 +24,45 @@ class ForecastViewModelTest {
 
     @get:Rule
     var coroutinesTestRule = CoroutinesTestRule()
+    @get:Rule
+    var commonTestRule = CommonTestRule()
 
-    @MockK
-    lateinit var forecastUsecase: ForecastUsecase
+    lateinit var viewModel: ForecastViewModel
 
     @ExperimentalCoroutinesApi
     @Before
     fun setUp() {
-        MockKAnnotations.init(this)
+        viewModel = ForecastViewModel(forecastUsecase)
+        viewModel.setTestContext(coroutinesTestRule.viewModelWithErrorContext)
+
+        every { loadingObserver.onChanged(any()) } just Runs
     }
 
     @Test
-    fun `updateForecast success`() {
+    fun `updateForecast success`() = coroutinesTestRule.mainDispatcher.runBlockingTest {
         // arrange
-        val viewModel = ForecastViewModel(forecastUsecase)
-        val forecastItems = mockk<List<ForecastItem>>()
-        val forecast = mockk<Forecast> {
-            every { forecasts } returns forecastItems
-        }
+        val forecastItems = listOf(forecastItem)
+        every { forecast.forecasts } returns forecastItems
         coEvery { forecastUsecase.getForecast() } returns forecast
+        viewModel.isLoading.observeForever(loadingObserver)
         // act
         viewModel.updateForecast()
         // assert
-//        assertEquals(true, viewModel.isLoading.value)
+        verify { loadingObserver.onChanged(true) }
         assertEquals(forecastItems, LiveDataTestUtil.getValue(viewModel.forecasts))
         assertEquals(false, LiveDataTestUtil.getValue(viewModel.isLoading))
     }
 
     @Test
-    fun `updateForecast failure`() {
+    fun `updateForecast failure`() = coroutinesTestRule.mainDispatcher.runBlockingTest {
         // arrange
-        val viewModel = ForecastViewModel(forecastUsecase)
         val exception = Exception()
         coEvery { forecastUsecase.getForecast() } throws exception
+        viewModel.isLoading.observeForever(loadingObserver)
         // act
         viewModel.updateForecast()
         // assert
-//        assertEquals(true, viewModel.isLoading.value)
+        verify { loadingObserver.onChanged(true) }
         assertEquals(null, viewModel.error.value)
         assertEquals(null, LiveDataTestUtil.getValue(viewModel.forecasts))
         assertEquals(false, LiveDataTestUtil.getValue(viewModel.isLoading))
@@ -66,11 +70,10 @@ class ForecastViewModelTest {
     }
 
     @Test
-    fun `getForecast loading blocked`() {
+    fun `getForecast loading blocked`() = coroutinesTestRule.mainDispatcher.runBlockingTest {
         // arrange
-        val viewModel = ForecastViewModel(forecastUsecase)
-        // act
         viewModel.isLoadingInternal.value = true
+        // act
         viewModel.updateForecast()
         // assert
         coVerify(exactly = 0) { forecastUsecase.getForecast() }
@@ -78,19 +81,37 @@ class ForecastViewModelTest {
     }
 
     @Test
-    fun `getForecast success`() {
+    fun `getForecast success`() = coroutinesTestRule.mainDispatcher.runBlockingTest {
         // arrange
-        val viewModel = ForecastViewModel(forecastUsecase)
-        val forecastItems = mockk<List<ForecastItem>>()
-        val forecast = mockk<Forecast> {
-            every { forecasts } returns forecastItems
-        }
+        val forecastItems = listOf(forecastItem)
+        every { forecast.forecasts } returns forecastItems
         coEvery { forecastUsecase.getForecast() } returns forecast
+        viewModel.isLoading.observeForever(loadingObserver)
         // act
         viewModel.updateForecast()
         // assert
-//        assertEquals(true, viewModel.isLoading.value)
+        verify { loadingObserver.onChanged(true) }
         assertEquals(forecastItems, LiveDataTestUtil.getValue(viewModel.forecasts))
         assertEquals(false, LiveDataTestUtil.getValue(viewModel.isLoading))
+    }
+
+    companion object {
+        @JvmStatic
+        private lateinit var forecastUsecase: ForecastUsecase
+        @JvmStatic
+        private lateinit var loadingObserver: Observer<Boolean>
+        @JvmStatic
+        private lateinit var forecast: Forecast
+        @JvmStatic
+        private lateinit var forecastItem: ForecastItem
+
+        @BeforeClass
+        @JvmStatic
+        fun initialize() {
+            forecastUsecase = mockk()
+            loadingObserver = mockk()
+            forecast = mockk()
+            forecastItem = mockk()
+        }
     }
 }

@@ -6,34 +6,31 @@ import com.vodolazskiy.forecastapplication.domain.ForecastUsecase
 import com.vodolazskiy.forecastapplication.domain.ForecastUsecaseImpl
 import com.vodolazskiy.forecastapplication.domain.entity.Forecast
 import com.vodolazskiy.forecastapplication.domain.exceptions.ServiceError
-import io.mockk.MockKAnnotations
 import io.mockk.coEvery
 import io.mockk.coVerify
-import io.mockk.impl.annotations.MockK
 import io.mockk.mockk
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Before
+import org.junit.BeforeClass
+import org.junit.Rule
 import org.junit.Test
 
 class ForecastUsecaseTest {
 
-    @MockK
-    lateinit var locationService: CurrentLocationService
-    @MockK
-    lateinit var forecastService: ForecastService
+    @get:Rule
+    var commonTestRule = CommonTestRule()
+
     lateinit var forecastUsecase: ForecastUsecase
 
     @Before
     fun setUp() {
-        MockKAnnotations.init(this)
         forecastUsecase = ForecastUsecaseImpl(locationService, forecastService)
     }
 
     @Test
     fun `getForecast success`() {
         // arrange
-        val forecast = mockk<Forecast>()
         coEvery { locationService.getCurrentLocation() } returns Pair(45.0, 45.0)
         coEvery { forecastService.fiveDaysForecast(any(), any()) } returns forecast
 
@@ -49,7 +46,6 @@ class ForecastUsecaseTest {
     @Test
     fun `getForecast location failure`() {
         // arrange
-        val forecast = mockk<Forecast>()
         val exception = ServiceError.NoLocationException()
         coEvery { locationService.getCurrentLocation() } throws exception
         coEvery { forecastService.fiveDaysForecast(any(), any()) } returns forecast
@@ -87,6 +83,23 @@ class ForecastUsecaseTest {
             // assert
             coVerify { locationService.getCurrentLocation() }
             assertEquals(exception, ex)
+        }
+    }
+
+    companion object {
+        @JvmStatic
+        private lateinit var locationService: CurrentLocationService
+        @JvmStatic
+        private lateinit var forecastService: ForecastService
+        @JvmStatic
+        private lateinit var forecast: Forecast
+
+        @BeforeClass
+        @JvmStatic
+        fun initialize() {
+            locationService = mockk()
+            forecastService = mockk()
+            forecast = mockk()
         }
     }
 }

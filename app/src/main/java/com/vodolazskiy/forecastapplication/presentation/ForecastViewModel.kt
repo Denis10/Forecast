@@ -17,14 +17,14 @@ import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
 class ForecastViewModel @Inject constructor(
-    private val forecastUsecase: ForecastUsecase
+        private val forecastUsecase: ForecastUsecase
 ) : BaseViewModel() {
 
     private val forecastsInternal = MutableLiveData<List<ForecastItem>>()
     val forecasts: LiveData<List<ForecastItem>> = forecastsInternal
     @VisibleForTesting
     val isLoadingInternal =
-        MutableLiveData<Boolean>().apply { value = false }
+            MutableLiveData<Boolean>().apply { value = false }
     val isLoading: LiveData<Boolean> = isLoadingInternal
     private val errorInternal = MutableLiveData<Throwable>()
     val error: LiveData<Throwable> = errorInternal.toSingleEvent()
@@ -49,7 +49,7 @@ class ForecastViewModel @Inject constructor(
         if (isLoadingInternal.value == true) return
         isLoadingInternal.value = true
         viewModelScope.launch(Dispatchers.Main + exceptionHandler) {
-            val task = async(Dispatchers.IO) {
+            val task = async(backgroundContext) {
                 forecastUsecase.getForecast()
             }
             val result = task.await()
