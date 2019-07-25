@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/main_navigation_graph"
+            app:startDestination="@+id/flow_step_one_dest">
+
+    <fragment
+            android:id="@+id/flow_step_one_dest"
+            android:name="com.vodolazskiy.forecastapplication.presentation.forecastlist.ForecastListFragment"
+            tools:layout="@layout/fragment_forecast_list">
+
+    </fragment>
+
+</navigation>

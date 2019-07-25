@@ -39,7 +39,7 @@ android {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${dep["kotlinVersion"]}")
-    implementation("androidx.appcompat:appcompat:${dep["supportLibraryVersion"]}")
+//    implementation("androidx.appcompat:appcompat:${dep["supportLibraryVersion"]}")
     implementation("androidx.core:core-ktx:${dep["ktxVersion"]}")
     implementation("androidx.constraintlayout:constraintlayout:${dep["constraintLayoutVersion"]}")
 
@@ -65,6 +65,10 @@ dependencies {
 
     //play services
     implementation("com.google.android.gms:play-services-location:${dep["playServicesVersion"]}")
+
+    //navigation
+    implementation("androidx.navigation:navigation-fragment-ktx:${dep["navigationVersion"]}")
+    implementation("androidx.navigation:navigation-ui-ktx:${dep["navigationVersion"]}")
 
     //tests
     testImplementation("junit:junit:${dep["junitVersion"]}")
