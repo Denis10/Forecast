@@ -5,7 +5,7 @@ import com.vodolazskiy.forecastapplication.core.di.modules.viewmodel.ViewModelFa
 import com.vodolazskiy.forecastapplication.core.di.modules.viewmodel.ViewModelKey
 import com.vodolazskiy.forecastapplication.core.di.scopes.ActivityScope
 import com.vodolazskiy.forecastapplication.core.di.scopes.FragmentScope
-import com.vodolazskiy.forecastapplication.presentation.ForecastViewModel
+import com.vodolazskiy.forecastapplication.presentation.forecastlist.ForecastViewModel
 import com.vodolazskiy.forecastapplication.presentation.MainActivity
 import com.vodolazskiy.forecastapplication.presentation.forecastlist.ForecastListFragment
 import dagger.Binds

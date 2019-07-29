@@ -5,7 +5,7 @@ import androidx.lifecycle.Observer
 import com.vodolazskiy.forecastapplication.domain.ForecastUsecase
 import com.vodolazskiy.forecastapplication.domain.entity.Forecast
 import com.vodolazskiy.forecastapplication.domain.entity.ForecastItem
-import com.vodolazskiy.forecastapplication.presentation.ForecastViewModel
+import com.vodolazskiy.forecastapplication.presentation.forecastlist.ForecastViewModel
 import io.mockk.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest

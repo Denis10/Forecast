@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.Observer
@@ -15,9 +14,6 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.vodolazskiy.forecastapplication.R
 import com.vodolazskiy.forecastapplication.core.di.modules.viewmodel.injectViewModel
-import com.vodolazskiy.forecastapplication.presentation.ForecastAdapter
-import com.vodolazskiy.forecastapplication.presentation.ForecastViewModel
-import com.vodolazskiy.forecastapplication.presentation.PermissionDialog
 import com.vodolazskiy.forecastapplication.presentation.base.BaseFragment
 import com.vodolazskiy.forecastapplication.presentation.base.setRefreshLock
 import kotlinx.android.synthetic.main.fragment_forecast_list.*
@@ -84,9 +80,10 @@ class ForecastListFragment : BaseFragment(), PermissionDialog.PermissionCallback
                     PackageManager.PERMISSION_GRANTED
 
         return if (!hasLocationPermission()) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(), LOCATION_PERMISSION)) {
+            if (shouldShowRequestPermissionRationale(LOCATION_PERMISSION)) {
                 showEmptyView(true)
-                PermissionDialog.newInstance().show(requireFragmentManager(), PermissionDialog::class.java.name)
+                PermissionDialog.newInstance(this)
+                    .show(requireFragmentManager(), PermissionDialog::class.java.name)
                 false
             } else {
                 requestLocationPermission()
@@ -98,10 +95,7 @@ class ForecastListFragment : BaseFragment(), PermissionDialog.PermissionCallback
     }
 
     private fun requestLocationPermission() {
-        ActivityCompat.requestPermissions(
-            requireActivity(), arrayOf(LOCATION_PERMISSION),
-            PERMISSIONS_REQUEST_LOCATION
-        )
+        requestPermissions(arrayOf(LOCATION_PERMISSION), PERMISSIONS_REQUEST_LOCATION)
     }
 
     override fun onRequestPermissionsResult(

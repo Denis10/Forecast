@@ -1,4 +1,4 @@
-package com.vodolazskiy.forecastapplication.presentation
+package com.vodolazskiy.forecastapplication.presentation.forecastlist
 
 import android.view.LayoutInflater
 import android.view.View
@@ -12,7 +12,9 @@ import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_forecast.view.*
 import java.text.SimpleDateFormat
 
-class ForecastAdapter : ListAdapter<ForecastItem, ForecastViewHolder>(ForecastDiffCallback()) {
+class ForecastAdapter : ListAdapter<ForecastItem, ForecastViewHolder>(
+    ForecastDiffCallback()
+) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ForecastViewHolder =
         ForecastViewHolder.create(parent)
@@ -35,7 +37,13 @@ class ForecastViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), La
 
         fun create(parent: ViewGroup): ForecastViewHolder {
             val inflater = LayoutInflater.from(parent.context)
-            return ForecastViewHolder(inflater.inflate(R.layout.item_forecast, parent, false))
+            return ForecastViewHolder(
+                inflater.inflate(
+                    R.layout.item_forecast,
+                    parent,
+                    false
+                )
+            )
         }
     }
 }

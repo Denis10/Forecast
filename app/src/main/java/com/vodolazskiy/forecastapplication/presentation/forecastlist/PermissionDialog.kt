@@ -1,4 +1,4 @@
-package com.vodolazskiy.forecastapplication.presentation
+package com.vodolazskiy.forecastapplication.presentation.forecastlist
 
 import android.app.Dialog
 import android.content.Context
@@ -10,11 +10,6 @@ import com.vodolazskiy.forecastapplication.R
 class PermissionDialog : DialogFragment() {
 
     private lateinit var callback: PermissionCallback
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        callback = context as PermissionCallback
-    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog =
         AlertDialog.Builder(requireActivity())
@@ -37,6 +32,7 @@ class PermissionDialog : DialogFragment() {
 
     companion object {
 
-        fun newInstance() = PermissionDialog()
+        fun newInstance(permissionCallback: PermissionCallback) =
+            PermissionDialog().apply { this.callback = permissionCallback }
     }
 }

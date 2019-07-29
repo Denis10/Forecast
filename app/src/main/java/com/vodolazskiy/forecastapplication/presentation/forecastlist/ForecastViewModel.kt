@@ -1,4 +1,4 @@
-package com.vodolazskiy.forecastapplication.presentation
+package com.vodolazskiy.forecastapplication.presentation.forecastlist
 
 import android.util.Log
 import androidx.annotation.VisibleForTesting
