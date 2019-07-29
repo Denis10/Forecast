@@ -10,6 +10,15 @@
             android:name="com.vodolazskiy.forecastapplication.presentation.forecastlist.ForecastListFragment"
             tools:layout="@layout/fragment_forecast_list">
 
+        <action
+                android:id="@+id/to_details"
+                app:destination="@id/forecast_details"/>
+    </fragment>
+
+    <fragment
+            android:id="@+id/forecast_details"
+            android:name="com.vodolazskiy.forecastapplication.presentation.forecastdetails.ForecastDetailsFragment"
+            tools:layout="@layout/fragment_forecast_details">
     </fragment>
 
 </navigation>

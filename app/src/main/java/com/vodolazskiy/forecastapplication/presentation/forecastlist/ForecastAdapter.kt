@@ -12,15 +12,22 @@ import kotlinx.android.extensions.LayoutContainer
 import kotlinx.android.synthetic.main.item_forecast.view.*
 import java.text.SimpleDateFormat
 
-class ForecastAdapter : ListAdapter<ForecastItem, ForecastViewHolder>(
-    ForecastDiffCallback()
-) {
+class ForecastAdapter(private val clickListener: (item: ForecastItem) -> Unit) :
+    ListAdapter<ForecastItem, ForecastViewHolder>(ForecastDiffCallback()), View.OnClickListener {
+
+    override fun onClick(v: View?) {
+        v?.tag?.run {
+            if (this is ForecastItem) {
+                clickListener.invoke(this)
+            }
+        }
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ForecastViewHolder =
         ForecastViewHolder.create(parent)
 
     override fun onBindViewHolder(holder: ForecastViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        holder.bind(getItem(position), this)
     }
 }
 
@@ -28,9 +35,11 @@ class ForecastViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), La
 
     override val containerView: View? = itemView
 
-    fun bind(item: ForecastItem) {
+    fun bind(item: ForecastItem, listener: View.OnClickListener) {
         itemView.txtDateValue.text = SimpleDateFormat.getDateTimeInstance().format(item.date)
         itemView.txtTemperatureValue.text = item.mainForecast.temp.toInt().toString()
+        itemView.cardView.setOnClickListener(listener)
+        itemView.cardView.tag = item
     }
 
     companion object {

@@ -11,6 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.vodolazskiy.forecastapplication.R
 import com.vodolazskiy.forecastapplication.core.di.modules.viewmodel.injectViewModel
@@ -39,7 +40,9 @@ class ForecastListFragment : BaseFragment(), PermissionDialog.PermissionCallback
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val adapter = ForecastAdapter()
+        val adapter = ForecastAdapter {
+            findNavController().navigate(R.id.to_details)
+        }
         rvForecasts.adapter = adapter
         val columns = resources.getInteger(R.integer.forecast_grid_columns)
         rvForecasts.layoutManager = StaggeredGridLayoutManager(columns, StaggeredGridLayoutManager.VERTICAL)
