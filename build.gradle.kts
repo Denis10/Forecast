@@ -8,12 +8,12 @@ buildscript {
         this["targetSdkVersion"] = 28
         this["forecastKey"] = "7e833141fef43d5cb7c86f7ad280e3fe"
         // App dependencies
-        set("gradleVersion", "3.4.0")
-        set("kotlinVersion", "1.3.31")
+        set("gradleVersion", "3.4.2")
+        set("kotlinVersion", "1.3.41")
         set("daggerVersion", "2.22.1")
         set("okhttpVersion", "3.14.1")
-        set("lifecycleVersion", "2.2.0-alpha01")
-        set("coroutinesVersion", "1.1.1")
+        set("lifecycleVersion", "2.2.0-alpha02")
+        set("coroutinesVersion", "1.2.2")
         set("playServicesVersion", "16.0.0")
         set("recyclerViewVersion", "1.1.0-alpha05")
         set("cardViewVersion", "1.0.0")
