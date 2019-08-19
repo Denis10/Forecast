@@ -1,5 +1,6 @@
 package com.vodolazskiy.forecastapplication.domain.entity
 
+import java.io.Serializable
 import java.util.*
 
 data class Forecast(
@@ -14,8 +15,8 @@ data class City(
 data class ForecastItem(
     val date: Date,
     val mainForecast: MainForecast
-)
+): Serializable
 
 data class MainForecast(
     val temp: Double
-)
+): Serializable

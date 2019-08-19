@@ -41,7 +41,7 @@ class ForecastListFragment : BaseFragment(), PermissionDialog.PermissionCallback
         super.onViewCreated(view, savedInstanceState)
 
         val adapter = ForecastAdapter {
-            findNavController().navigate(R.id.to_details)
+            findNavController().navigate(ForecastListFragmentDirections.toDetails(it))
         }
         rvForecasts.adapter = adapter
         val columns = resources.getInteger(R.integer.forecast_grid_columns)

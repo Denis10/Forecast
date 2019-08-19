@@ -19,6 +19,11 @@
             android:id="@+id/forecast_details"
             android:name="com.vodolazskiy.forecastapplication.presentation.forecastdetails.ForecastDetailsFragment"
             tools:layout="@layout/fragment_forecast_details">
+
+        <argument
+                android:name="forecastItem"
+                app:argType="com.vodolazskiy.forecastapplication.domain.entity.ForecastItem"
+                app:nullable="false"/>
     </fragment>
 
 </navigation>

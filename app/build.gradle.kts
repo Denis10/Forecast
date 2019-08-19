@@ -3,6 +3,7 @@ plugins {
     kotlin("android")
     kotlin("android.extensions")
     kotlin("kapt")
+    id("androidx.navigation.safeargs.kotlin")
 }
 
 val dep = rootProject.ext
@@ -39,7 +40,6 @@ android {
 
 dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${dep["kotlinVersion"]}")
-//    implementation("androidx.appcompat:appcompat:${dep["supportLibraryVersion"]}")
     implementation("androidx.core:core-ktx:${dep["ktxVersion"]}")
     implementation("androidx.constraintlayout:constraintlayout:${dep["constraintLayoutVersion"]}")
 
