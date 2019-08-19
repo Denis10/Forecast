@@ -23,12 +23,10 @@ private const val FASTEST_INTERVAL = 5000L
 private const val LOCATION_EXPIRE_TIME: Long = 3600 * 1000
 private const val TIMEOUT = 60_000L
 
-class CurrentLocationServiceImpl @Inject constructor(
-        private val context: Context
-) : CurrentLocationService {
+class CurrentLocationServiceImpl @Inject constructor(private val context: Context) : CurrentLocationService {
 
     private val fusedLocationClient: FusedLocationProviderClient =
-            LocationServices.getFusedLocationProviderClient(context)
+        LocationServices.getFusedLocationProviderClient(context)
 
 
     @SuppressLint("MissingPermission")
@@ -38,13 +36,13 @@ class CurrentLocationServiceImpl @Inject constructor(
         }
         val location = runWithTimeout {
             getLastLocation()
-                    ?.let {
-                        if (Calendar.getInstance().time.time - it.time > LOCATION_EXPIRE_TIME) {
-                            requestLocation()
-                        } else {
-                            it
-                        }
-                    } ?: requestLocation()
+                ?.let {
+                    if (Calendar.getInstance().time.time - it.time > LOCATION_EXPIRE_TIME) {
+                        requestLocation()
+                    } else {
+                        it
+                    }
+                } ?: requestLocation()
         }
 
         return location.latitude to location.longitude
@@ -61,18 +59,21 @@ class CurrentLocationServiceImpl @Inject constructor(
     }
 
     private fun hasLocationPermission(context: Context) =
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
 
     private suspend fun getLastLocation(): Location? {
         try {
             return suspendCancellableCoroutine { coroutine ->
                 fusedLocationClient.lastLocation
-                        .addOnSuccessListener { location: Location? ->
-                            coroutine.resumeWith(Result.success(location))
-                        }
-                        .addOnFailureListener {
-                            coroutine.resumeWithException(it)
-                        }
+                    .addOnSuccessListener { location: Location? ->
+                        coroutine.resumeWith(Result.success(location))
+                    }
+                    .addOnFailureListener {
+                        coroutine.resumeWithException(it)
+                    }
             }
         } catch (e: Exception) {
             throw ServiceError.NoLocationException(e)
@@ -89,6 +90,7 @@ class CurrentLocationServiceImpl @Inject constructor(
                         if (locationResult.locations.isEmpty()) throw ServiceError.NoLocationException()
 
                         coroutine.resumeWith(Result.success(locationResult.locations[0]))
+                        fusedLocationClient.removeLocationUpdates(this)
                     }
                 }
                 val request = LocationRequest()
