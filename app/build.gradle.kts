@@ -1,3 +1,5 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+
 plugins {
     id("com.android.application")
     kotlin("android")
@@ -35,6 +37,17 @@ android {
     }
     testOptions {
         unitTests.isReturnDefaultValues = true
+    }
+    tasks.withType<Test> {
+        testLogging {
+            //"STANDARD_OUT" shows fines
+            //"STANDARD_ERROR" can show hort messages
+            events("PASSED", "FAILED", "SKIPPED", "STANDARD_OUT")
+            //The lines below shows full stacktrace
+            showExceptions = true
+            showStackTraces = true
+            exceptionFormat = TestExceptionFormat.FULL
+        }
     }
 }
 
