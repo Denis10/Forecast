@@ -7,27 +7,30 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.vodolazskiy.forecastapplication.core.livedata.toSingleEvent
 import com.vodolazskiy.forecastapplication.domain.ForecastUsecase
+import com.vodolazskiy.forecastapplication.domain.entity.Forecast
 import com.vodolazskiy.forecastapplication.domain.entity.ForecastItem
 import com.vodolazskiy.forecastapplication.presentation.base.BaseViewModel
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
 class ForecastViewModel @Inject constructor(
-        private val forecastUsecase: ForecastUsecase
+    private val forecastUsecase: ForecastUsecase
 ) : BaseViewModel() {
 
     private val forecastsInternal = MutableLiveData<List<ForecastItem>>()
     val forecasts: LiveData<List<ForecastItem>> = forecastsInternal
     @VisibleForTesting
     val isLoadingInternal =
-            MutableLiveData<Boolean>().apply { value = false }
+        MutableLiveData<Boolean>().apply { value = false }
     val isLoading: LiveData<Boolean> = isLoadingInternal
     private val errorInternal = MutableLiveData<Throwable>()
     val error: LiveData<Throwable> = errorInternal.toSingleEvent()
+
+    private val forecastsChannel = Channel<Forecast>(capacity = Channel.RENDEZVOUS)
 
     private val exceptionHandler: CoroutineContext = CoroutineExceptionHandler { _, throwable ->
         Log.e("ForecastViewModel", "", throwable)
@@ -43,19 +46,26 @@ class ForecastViewModel @Inject constructor(
         }
     }
 
-    fun updateForecast() = loadForecast()
+    fun updateForecast() {
+        loadForecast()
+    }
 
     private fun loadForecast() {
         if (isLoadingInternal.value == true) return
         isLoadingInternal.value = true
         viewModelScope.launch(Dispatchers.Main + exceptionHandler) {
-            val task = async(backgroundContext) {
-                forecastUsecase.getForecast()
+            launch(backgroundContext) {
+                forecastUsecase.listenForecasts(forecastsChannel)
             }
-            val result = task.await()
+            val result = forecastsChannel.receive()
             forecastsInternal.value = result.forecasts
             isLoadingInternal.value = false
             Log.d("ForecastViewModel", "list after await = $result")
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        forecastsChannel.close()
     }
 }

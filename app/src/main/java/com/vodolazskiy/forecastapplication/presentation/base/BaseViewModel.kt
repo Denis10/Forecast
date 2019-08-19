@@ -13,7 +13,6 @@ abstract class BaseViewModel : ViewModel() {
     var backgroundContext: CoroutineContext = Dispatchers.IO
         private set
 
-    @ExperimentalCoroutinesApi
     override fun onCleared() {
         super.onCleared()
         viewModelScope.cancel()

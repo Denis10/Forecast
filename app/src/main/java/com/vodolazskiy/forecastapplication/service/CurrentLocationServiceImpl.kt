@@ -10,11 +10,10 @@ import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 import com.vodolazskiy.forecastapplication.domain.CurrentLocationService
 import com.vodolazskiy.forecastapplication.domain.exceptions.ServiceError
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.coroutines.resumeWithException
 
@@ -25,9 +24,11 @@ private const val TIMEOUT = 60_000L
 
 class CurrentLocationServiceImpl @Inject constructor(private val context: Context) : CurrentLocationService {
 
+    private val isListening: AtomicBoolean = AtomicBoolean()
+    private var listeningCallback: LocationCallback? = null
+
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
-
 
     @SuppressLint("MissingPermission")
     override suspend fun getCurrentLocation(): Pair<Double, Double> {
@@ -80,6 +81,15 @@ class CurrentLocationServiceImpl @Inject constructor(private val context: Contex
         }
     }
 
+    override suspend fun getLastKnownLocation(): Pair<Double, Double>? {
+        val location = getLastLocation()
+        return if (location == null) {
+            null
+        } else {
+            location.latitude to location.longitude
+        }
+    }
+
     private suspend fun requestLocation(): Location {
         try {
             return suspendCancellableCoroutine { coroutine ->
@@ -90,7 +100,6 @@ class CurrentLocationServiceImpl @Inject constructor(private val context: Contex
                         if (locationResult.locations.isEmpty()) throw ServiceError.NoLocationException()
 
                         coroutine.resumeWith(Result.success(locationResult.locations[0]))
-                        fusedLocationClient.removeLocationUpdates(this)
                     }
                 }
                 val request = LocationRequest()
@@ -98,9 +107,48 @@ class CurrentLocationServiceImpl @Inject constructor(private val context: Contex
                 request.interval = UPDATE_INTERVAL
                 request.fastestInterval = FASTEST_INTERVAL
                 fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
+                isListening.set(true)
             }
         } catch (e: Exception) {
             throw ServiceError.NoLocationException(e)
+        }
+    }
+
+    //todo register channels
+    @ExperimentalCoroutinesApi
+    @SuppressLint("MissingPermission")
+    override suspend fun listenLocations(locationChannel: Channel<Pair<Double, Double>>) {
+        if (!hasLocationPermission(context)) {
+            throw ServiceError.NoLocationException()
+        }
+        if (isListening.get()){
+            getLastLocation()?.let {
+                locationChannel.offer(it.latitude to it. longitude)
+            }
+        } else {
+            listeningCallback = object : LocationCallback() {
+                override fun onLocationResult(locationResult: LocationResult?) {
+                    locationResult ?: throw ServiceError.NoLocationException()
+                    if (locationResult.locations.isEmpty()) throw ServiceError.NoLocationException()
+
+                    if (!locationChannel.isClosedForSend) {
+                        val location = locationResult.locations[0]
+                        locationChannel.offer(location.latitude to location.longitude)
+                    }
+                }
+            }
+            val request = LocationRequest()
+            request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            request.interval = UPDATE_INTERVAL
+            request.fastestInterval = FASTEST_INTERVAL
+            fusedLocationClient.requestLocationUpdates(request, listeningCallback, Looper.getMainLooper())
+            isListening.set(true)
+        }
+    }
+
+    override suspend fun stopListening() {
+        listeningCallback?.let {
+            fusedLocationClient.removeLocationUpdates(it)
         }
     }
 }
