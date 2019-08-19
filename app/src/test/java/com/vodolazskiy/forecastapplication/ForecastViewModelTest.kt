@@ -29,7 +29,6 @@ class ForecastViewModelTest {
 
     lateinit var viewModel: ForecastViewModel
 
-    @ExperimentalCoroutinesApi
     @Before
     fun setUp() {
         viewModel = ForecastViewModel(forecastUsecase)
