@@ -79,6 +79,10 @@ dependencies {
     //play services
     implementation("com.google.android.gms:play-services-location:${dep["playServicesVersion"]}")
 
+    //analytics, etc
+    implementation("com.microsoft.appcenter:appcenter-analytics:${dep["appCenterSdkVersion"]}")
+    implementation("com.microsoft.appcenter:appcenter-crashes:${dep["appCenterSdkVersion"]}")
+
     //tests
     testImplementation("junit:junit:${dep["junitVersion"]}")
     testImplementation("io.mockk:mockk:${dep["mockkVersion"]}")

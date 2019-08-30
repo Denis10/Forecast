@@ -2,12 +2,12 @@
 
 buildscript {
     extra.apply {
-        // Sdk and tools
+        //Sdk and tools
         this["compileSdkVersion"] = 28
         this["minSdkVersion"] = 21
         this["targetSdkVersion"] = 28
         this["forecastKey"] = "7e833141fef43d5cb7c86f7ad280e3fe"
-        // App dependencies
+        //App dependencies
         set("gradleVersion", "3.4.2")
         set("kotlinVersion", "1.3.41")
         set("daggerVersion", "2.22.1")
@@ -20,7 +20,8 @@ buildscript {
         set("supportLibraryVersion", "1.1.0-alpha05")
         set("constraintLayoutVersion", "2.0.0-beta1")
         set("ktxVersion", "1.2.0-alpha01")
-        // Tests
+        set("appCenterSdkVersion", "2.3.0")
+        //Tests
         set("junitVersion", "4.13-beta-2")
         set("mockkVersion", "1.9.3")
         set("archCoreVersion", "1.1.1")
