@@ -2,6 +2,7 @@ package com.vodolazskiy.forecastapplication.presentation
 
 import android.app.Dialog
 import android.content.Context
+import android.content.DialogInterface
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -27,6 +28,12 @@ class PermissionDialog : DialogFragment() {
                 callback.onLocationDenied()
             }
             .create()
+
+    override fun onCancel(dialog: DialogInterface) {
+        super.onCancel(dialog)
+
+        callback.onLocationDenied()
+    }
 
     interface PermissionCallback {
 
