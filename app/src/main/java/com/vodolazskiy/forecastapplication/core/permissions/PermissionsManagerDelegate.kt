@@ -15,11 +15,11 @@ import java.util.concurrent.atomic.AtomicInteger
  * Delegate for [PermissionsManager]
  *
  * @param permissionsObservable - observer for [OnRequestPermissionsResultEvent] events
- * @param view - suspend function which belongs to view.
+ * @param activity - Activity.
  * */
 class PermissionsManagerDelegate(
     val permissionsObservable: Channel<OnRequestPermissionsResultEvent> = Channel(),
-    private val view: suspend () -> Activity
+    private val activity: ()-> Activity
 ) : PermissionsManager {
 
     /**
@@ -45,11 +45,16 @@ class PermissionsManagerDelegate(
     }
 
     /**
-     * @see [PermissionsManager.shouldShowRequestPermissionRationale]
+     * Implementation of permission rational status request. Should be called on UI thread
+     *
+     * @param permission - permission to check
+     * @return true if permission needs explanation
      * */
-    override suspend fun shouldShowRequestPermissionRationale(permission: String): Boolean {
-        //we always use UI thread to work with permissions
-        return withContext(Dispatchers.Main) { shouldShowRequestPermissionRationaleImpl(permission) }
+    @UiThread
+    override fun shouldShowRequestPermissionRationale(permission: String): Boolean {
+        if (!isMarshmallow()) return false
+
+        return activity().shouldShowRequestPermissionRationale(permission)
     }
 
     /**
@@ -74,8 +79,7 @@ class PermissionsManagerDelegate(
         try {
             val requestCode = generateRequestCode()
 
-            val v = view()
-            v.requestPermissions(permissions.toTypedArray(), requestCode)
+            activity().requestPermissions(permissions.toTypedArray(), requestCode)
 
             //wait for permissions request result
             val event = permissionsObservable.filter { it.requestCode == requestCode }.receive()
@@ -86,31 +90,16 @@ class PermissionsManagerDelegate(
     }
 
     /**
-     * Implementation of permission rational status request. Should be called on UI thread
-     *
-     * @param permission - permission to check
-     * @return true if permission needs explanation
-     * */
-    @UiThread
-    private suspend fun shouldShowRequestPermissionRationaleImpl(permission: String): Boolean {
-        if (!isMarshmallow()) return false
-
-        val v = view()
-        return v.shouldShowRequestPermissionRationale(permission)
-    }
-
-    /**
      * Implementation of permission granted status request. Should be called on UI thread
      *
      * @param permission - permission to check
      * @return true if permission is granted
      * */
     @UiThread
-    private suspend fun isPermissionGranted(permission: String): Boolean {
+    override fun isPermissionGranted(permission: String): Boolean {
         if (!isMarshmallow()) return true
 
-        val v = view()
-        return v.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
+        return activity().checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
     }
 
     /**
@@ -119,12 +108,10 @@ class PermissionsManagerDelegate(
      * @param permission - permission to check
      * @return true if permission is revoked
      * */
-    private suspend fun isPermissionRevoked(permission: String): Boolean {
+    private fun isPermissionRevoked(permission: String): Boolean {
         if (!isMarshmallow()) return false
 
-        val activity: Activity = view()
-
-        return activity.packageManager.isPermissionRevokedByPolicy(permission, activity.packageName)
+        return activity().packageManager.isPermissionRevokedByPolicy(permission, activity().packageName)
     }
 
     /**

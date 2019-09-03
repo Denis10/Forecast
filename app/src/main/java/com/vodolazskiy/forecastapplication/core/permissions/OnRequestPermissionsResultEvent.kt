@@ -21,7 +21,7 @@ data class OnRequestPermissionsResultEvent(
         val shouldShowRequestPermissionRationale: List<Boolean>) {
 
     /**
-     * Returns true if all permissions ara granted
+     * Returns true if all permissions are granted
      * */
     val isAllGranted: Boolean get() = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
 

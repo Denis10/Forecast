@@ -1,5 +1,7 @@
 package com.vodolazskiy.forecastapplication.core.permissions
 
+import androidx.annotation.UiThread
+
 /**
  * Interface to work with permissions
  * */
@@ -10,6 +12,7 @@ interface PermissionsManager {
      * @param permissions - list of permissions to request
      * @return [RequestPermissionsResult]
      * */
+    @UiThread
     suspend fun requestPermissions(vararg permissions: String) = requestPermissions(permissions.toList())
 
     /**
@@ -18,6 +21,7 @@ interface PermissionsManager {
      * @param permissions - list of permissions to request
      * @return [RequestPermissionsResult]
      * */
+    @UiThread
     suspend fun requestPermissions(permissions: List<String>): RequestPermissionsResult
 
     /**
@@ -26,6 +30,7 @@ interface PermissionsManager {
      * @param permissions - list of permissions to request
      * @return [RequestPermissionsResult]
      * */
+    @UiThread
     suspend fun requestPermissionsOrThrow(vararg permissions: String) = requestPermissionsOrThrow(permissions.toList())
 
     /**
@@ -34,6 +39,7 @@ interface PermissionsManager {
      * @param permissions - list of permissions to request
      * @return [RequestPermissionsResult]
      * */
+    @UiThread
     suspend fun requestPermissionsOrThrow(permissions: List<String>): RequestPermissionsResult
 
     /**
@@ -42,5 +48,15 @@ interface PermissionsManager {
      * @param permission - permission to check
      * @return true if [permission] needs explanation dialog
      * */
-    suspend fun shouldShowRequestPermissionRationale(permission: String): Boolean
+    @UiThread
+    fun shouldShowRequestPermissionRationale(permission: String): Boolean
+
+    /**
+     * Checks if [permission] granted
+     *
+     * @param permission - permission to check
+     * @return true if [permission] is granted
+     * */
+    @UiThread
+    fun isPermissionGranted(permission: String): Boolean
 }
