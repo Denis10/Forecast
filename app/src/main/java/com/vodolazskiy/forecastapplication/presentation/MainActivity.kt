@@ -2,9 +2,9 @@ package com.vodolazskiy.forecastapplication.presentation
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.Observer
@@ -12,12 +12,16 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.vodolazskiy.forecastapplication.R
 import com.vodolazskiy.forecastapplication.core.di.modules.viewmodel.injectViewModel
+import com.vodolazskiy.forecastapplication.core.permissions.OnRequestPermissionsResultEvent
+import com.vodolazskiy.forecastapplication.core.permissions.PermissionsManagerDelegate
 import com.vodolazskiy.forecastapplication.presentation.base.BaseActivity
 import com.vodolazskiy.forecastapplication.presentation.base.setRefreshLock
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-private const val PERMISSIONS_REQUEST_LOCATION = 102
 private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_FINE_LOCATION
 
 class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
@@ -25,6 +29,8 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
     @Inject
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var forecastViewModel: ForecastViewModel
+
+    private val permissionsManager = PermissionsManagerDelegate { this@MainActivity }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,7 +41,8 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
         val adapter = ForecastAdapter()
         rvForecasts.adapter = adapter
         val columns = resources.getInteger(R.integer.forecast_grid_columns)
-        rvForecasts.layoutManager = StaggeredGridLayoutManager(columns, StaggeredGridLayoutManager.VERTICAL)
+        rvForecasts.layoutManager =
+            StaggeredGridLayoutManager(columns, StaggeredGridLayoutManager.VERTICAL)
 
         swipeRefreshLayout.setOnRefreshListener {
             forecastViewModel.updateForecast()
@@ -56,8 +63,32 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
         forecastViewModel.error.observe(this, Observer {
             Toast.makeText(this, getString(R.string.something_wrong), Toast.LENGTH_SHORT).show()
         })
-        if (isLocationPermissionGranted()) {
+        if (hasLocationPermission()) {
             forecastViewModel.getForecast()
+        } else {
+            requestPermissions()
+        }
+    }
+
+    private fun hasLocationPermission(): Boolean =
+        ContextCompat.checkSelfPermission(this, LOCATION_PERMISSION) ==
+                PackageManager.PERMISSION_GRANTED
+
+    private fun requestPermissions() = launch {
+        permissionsManager.requestPermissions(LOCATION_PERMISSION).let {
+            when {
+                it.isShouldShowRequestPermissionRationale -> {
+                    withContext(Dispatchers.Main) {
+                        showEmptyView(true)
+                        PermissionDialog.newInstance()
+                            .show(supportFragmentManager, PermissionDialog::class.java.name)
+                    }
+                }
+                it.isAllGranted -> forecastViewModel.getForecast()
+                else -> withContext(Dispatchers.Main) {
+                    showEmptyView(true)
+                }
+            }
         }
     }
 
@@ -66,44 +97,24 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
         rvForecasts.isVisible = !show
     }
 
-    private fun isLocationPermissionGranted(): Boolean {
-
-        fun hasLocationPermission(): Boolean =
-            ContextCompat.checkSelfPermission(this, LOCATION_PERMISSION) ==
-                PackageManager.PERMISSION_GRANTED
-
-        return if (!hasLocationPermission()) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, LOCATION_PERMISSION)) {
-                showEmptyView(true)
-                PermissionDialog.newInstance().show(supportFragmentManager, PermissionDialog::class.java.name)
-                false
-            } else {
-                requestLocationPermission()
-                false
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>, grantResults: IntArray
+    ) {
+        launch {
+            val shouldShowRequestPermissionRationale = BooleanArray(permissions.size) {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && shouldShowRequestPermissionRationale(
+                    permissions[it]
+                )
             }
-        } else {
-            true
-        }
-    }
-
-    private fun requestLocationPermission() {
-        ActivityCompat.requestPermissions(this, arrayOf(LOCATION_PERMISSION), PERMISSIONS_REQUEST_LOCATION)
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>, grantResults: IntArray) {
-        when (requestCode) {
-            PERMISSIONS_REQUEST_LOCATION -> {
-                if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    forecastViewModel.updateForecast()
-                } else {
-                    showEmptyView(true)
-                }
-                return
-            }
-            else -> {
-                // Ignore all other requests.
-            }
+            permissionsManager.permissionsObservable.send(
+                OnRequestPermissionsResultEvent(
+                    requestCode = requestCode,
+                    permissions = permissions.toList(),
+                    grantResults = grantResults.toList(),
+                    shouldShowRequestPermissionRationale = shouldShowRequestPermissionRationale.toList()
+                )
+            )
         }
     }
 
@@ -111,7 +122,9 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
     * PermissionCallback
     */
 
-    override fun onLocationGranted() = requestLocationPermission()
+    override fun onLocationGranted() {
+        requestPermissions()
+    }
 
     override fun onLocationDenied() {
         showEmptyView(true)
