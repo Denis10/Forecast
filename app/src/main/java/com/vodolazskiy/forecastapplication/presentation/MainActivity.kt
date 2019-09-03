@@ -19,7 +19,7 @@ import javax.inject.Inject
 
 private const val PERMISSIONS_REQUEST_LOCATION = 102
 private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_FINE_LOCATION
-private const val REMISSION_FLOW_IN_PROGRESS = "REMISSION_FLOW_IN_PROGRESS"
+private const val PERMISSION_FLOW_IN_PROGRESS = "PERMISSION_FLOW_IN_PROGRESS"
 
 class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
 
@@ -33,7 +33,7 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        permissionFlowInProgress = savedInstanceState?.getBoolean(REMISSION_FLOW_IN_PROGRESS) ?: false
+        permissionFlowInProgress = savedInstanceState?.getBoolean(PERMISSION_FLOW_IN_PROGRESS) ?: false
 
         forecastViewModel = injectViewModel(viewModelFactory)
 
@@ -67,7 +67,7 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putBoolean(REMISSION_FLOW_IN_PROGRESS, permissionFlowInProgress)
+        outState.putBoolean(PERMISSION_FLOW_IN_PROGRESS, permissionFlowInProgress)
         super.onSaveInstanceState(outState)
     }
 
