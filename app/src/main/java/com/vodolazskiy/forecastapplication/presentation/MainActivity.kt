@@ -18,7 +18,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_FINE_LOCATION
-private const val PERMISSION_FLOW_IN_PROGRESS = "PERMISSION_FLOW_IN_PROGRESS"
 
 class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
 
@@ -26,14 +25,9 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var forecastViewModel: ForecastViewModel
 
-    private var permissionFlowInProgress = false
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-        permissionFlowInProgress =
-            savedInstanceState?.getBoolean(PERMISSION_FLOW_IN_PROGRESS) ?: false
 
         forecastViewModel = injectViewModel(viewModelFactory)
 
@@ -82,16 +76,11 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
         permissionsManager.requestPermissions(LOCATION_PERMISSION).let {
             permissionFlowInProgress = false
             when {
-                it.isShouldShowRequestPermissionRationale -> {
-                    showExplanation()
-                }
                 it.isAllGranted -> {
                     forecastViewModel.getForecast()
-                    permissionFlowInProgress = false
                 }
                 else -> withContext(Dispatchers.Main) {
                     showEmptyView(true)
-                    permissionFlowInProgress = false
                 }
             }
         }
@@ -106,11 +95,6 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
                     .show(supportFragmentManager, PermissionDialog::class.java.name)
             }
         }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putBoolean(PERMISSION_FLOW_IN_PROGRESS, permissionFlowInProgress)
-        super.onSaveInstanceState(outState)
     }
 
     private fun showEmptyView(show: Boolean) {

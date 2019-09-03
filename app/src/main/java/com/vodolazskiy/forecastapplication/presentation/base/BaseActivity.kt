@@ -11,7 +11,11 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
+private const val PERMISSION_FLOW_IN_PROGRESS = "PERMISSION_FLOW_IN_PROGRESS"
+
 abstract class BaseActivity : AppCompatActivity(), CoroutineScope by MainScope() {
+
+    protected var permissionFlowInProgress = false
 
     protected val permissionsManager = PermissionsManagerDelegate(activity = { this })
 
@@ -19,6 +23,15 @@ abstract class BaseActivity : AppCompatActivity(), CoroutineScope by MainScope()
         super.onCreate(savedInstanceState)
 
         AndroidInjection.inject(this)
+
+        permissionFlowInProgress =
+            savedInstanceState?.getBoolean(PERMISSION_FLOW_IN_PROGRESS) ?: false
+    }
+
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(PERMISSION_FLOW_IN_PROGRESS, permissionFlowInProgress)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroy() {
