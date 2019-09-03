@@ -11,6 +11,8 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
+
+
 abstract class BaseActivity : AppCompatActivity(), CoroutineScope by MainScope() {
 
     protected val permissionsManager = PermissionsManagerDelegate(activity = { this })

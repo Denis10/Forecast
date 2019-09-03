@@ -19,6 +19,7 @@ import javax.inject.Inject
 
 private const val PERMISSIONS_REQUEST_LOCATION = 102
 private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_FINE_LOCATION
+private const val PERMISSION_FLOW_IN_PROGRESS = "PERMISSION_FLOW_IN_PROGRESS"
 
 class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
 
@@ -26,9 +27,14 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
     lateinit var viewModelFactory: ViewModelProvider.Factory
     private lateinit var forecastViewModel: ForecastViewModel
 
+    private var permissionFlowInProgress = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        permissionFlowInProgress =
+            savedInstanceState?.getBoolean(PERMISSION_FLOW_IN_PROGRESS) ?: false
 
         forecastViewModel = injectViewModel(viewModelFactory)
 
@@ -60,19 +66,15 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
         if (permissionsManager.isPermissionGranted(LOCATION_PERMISSION)) {
             forecastViewModel.getForecast()
         } else {
-            requestPermissions()
+            requestPermissionsWithRational()
         }
 
         launch {
             permissionsManager.listenForCode(PERMISSIONS_REQUEST_LOCATION).let {
+                withContext(Dispatchers.Main) {
+                    permissionFlowInProgress = false
+                }
                 when {
-                    it.isShouldShowRequestPermissionRationale -> {
-                        withContext(Dispatchers.Main) {
-                            showEmptyView(true)
-                            PermissionDialog.newInstance()
-                                .show(supportFragmentManager, PermissionDialog::class.java.name)
-                        }
-                    }
                     it.isAllGranted -> forecastViewModel.getForecast()
                     else -> withContext(Dispatchers.Main) {
                         showEmptyView(true)
@@ -82,7 +84,30 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean(PERMISSION_FLOW_IN_PROGRESS, permissionFlowInProgress)
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun requestPermissionsWithRational() {
+        if (permissionsManager.shouldShowRequestPermissionRationale(LOCATION_PERMISSION)) {
+            showExplanation()
+        } else {
+            requestPermissions()
+        }
+    }
+
+    private fun showExplanation() {
+        showEmptyView(true)
+        if (!permissionFlowInProgress) {
+            permissionFlowInProgress = true
+            PermissionDialog.newInstance()
+                .show(supportFragmentManager, PermissionDialog::class.java.name)
+        }
+    }
+
     private fun requestPermissions() {
+        permissionFlowInProgress = true
         permissionsManager.requestPermissions(PERMISSIONS_REQUEST_LOCATION, LOCATION_PERMISSION)
     }
 
@@ -101,5 +126,6 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
 
     override fun onLocationDenied() {
         showEmptyView(true)
+        permissionFlowInProgress = false
     }
 }
