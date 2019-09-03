@@ -13,7 +13,8 @@ interface PermissionsManager {
      * @return [RequestPermissionsResult]
      * */
     @UiThread
-    suspend fun requestPermissions(vararg permissions: String) = requestPermissions(permissions.toList())
+    fun requestPermissions(requestCode: Int, vararg permissions: String) =
+        requestPermissions(requestCode, permissions.toList())
 
     /**
      * Asks about specified permissions
@@ -22,25 +23,10 @@ interface PermissionsManager {
      * @return [RequestPermissionsResult]
      * */
     @UiThread
-    suspend fun requestPermissions(permissions: List<String>): RequestPermissionsResult
+    fun requestPermissions(requestCode: Int, permissions: List<String>)
 
-    /**
-     * Asks about specified permissions. Throws exception if not all permissions were granted
-     *
-     * @param permissions - list of permissions to request
-     * @return [RequestPermissionsResult]
-     * */
     @UiThread
-    suspend fun requestPermissionsOrThrow(vararg permissions: String) = requestPermissionsOrThrow(permissions.toList())
-
-    /**
-     * Asks about specified permissions. Throws exception if not all permissions were granted
-     *
-     * @param permissions - list of permissions to request
-     * @return [RequestPermissionsResult]
-     * */
-    @UiThread
-    suspend fun requestPermissionsOrThrow(permissions: List<String>): RequestPermissionsResult
+    suspend fun listenForCode(requestCode: Int): RequestPermissionsResult
 
     /**
      * Checks if [permission] needs explanation dialog

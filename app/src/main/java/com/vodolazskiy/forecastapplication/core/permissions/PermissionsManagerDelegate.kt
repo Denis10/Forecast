@@ -4,12 +4,8 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.UiThread
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.filter
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Delegate for [PermissionsManager]
@@ -19,29 +15,15 @@ import java.util.concurrent.atomic.AtomicInteger
  * */
 class PermissionsManagerDelegate(
     val permissionsObservable: Channel<OnRequestPermissionsResultEvent> = Channel(),
-    private val activity: ()-> Activity
+    private val activity: () -> Activity
 ) : PermissionsManager {
 
     /**
      * @see [PermissionsManager.requestPermissions]
      * */
-    override suspend fun requestPermissions(permissions: List<String>): RequestPermissionsResult {
+    override fun requestPermissions(requestCode: Int, permissions: List<String>) {
         //we always use UI thread to work with permissions
-        return withContext(Dispatchers.Main) { requestPermissionsImpl(permissions) }
-    }
-
-    /**
-     * @see [PermissionsManager.requestPermissionsOrThrow]
-     * */
-    override suspend fun requestPermissionsOrThrow(permissions: List<String>): RequestPermissionsResult {
-        val result = requestPermissions(permissions)
-        if (!result.isAllGranted) {
-            throw PermissionException(
-                "Some permissions were denied: ${result.deniedPermissions.joinToString()}",
-                result
-            )
-        }
-        return result
+        return requestPermissionsImpl(requestCode, permissions)
     }
 
     /**
@@ -64,29 +46,15 @@ class PermissionsManagerDelegate(
      * @return [RequestPermissionsResult]
      * */
     @UiThread
-    private suspend fun requestPermissionsImpl(permissions: List<String>): RequestPermissionsResult {
-        if (!isMarshmallow() || permissions.all { isPermissionGranted(it) }) {
-            return RequestPermissionsResult(
-                grantedPermissions = permissions,
-                deniedPermissions = emptyList()
-            )
-        }
+    private fun requestPermissionsImpl(requestCode: Int, permissions: List<String>) {
+        if (!isMarshmallow() || permissions.all { isPermissionGranted(it) }) return
 
-        // You can request only one permissions set at once;
-        // otherwise second permissions set will be denied.
-        // So, to prevent it, we use static mutex here
-        REQUEST_PERMISSION_MUTEX.lock()
-        try {
-            val requestCode = generateRequestCode()
+        activity().requestPermissions(permissions.toTypedArray(), requestCode)
+    }
 
-            activity().requestPermissions(permissions.toTypedArray(), requestCode)
-
-            //wait for permissions request result
-            val event = permissionsObservable.filter { it.requestCode == requestCode }.receive()
-            return RequestPermissionsResult(event)
-        } finally {
-            REQUEST_PERMISSION_MUTEX.unlock()
-        }
+    override suspend fun listenForCode(requestCode: Int): RequestPermissionsResult {
+        val event = permissionsObservable.filter { it.requestCode == requestCode }.receive()
+        return RequestPermissionsResult(event)
     }
 
     /**
@@ -111,7 +79,10 @@ class PermissionsManagerDelegate(
     private fun isPermissionRevoked(permission: String): Boolean {
         if (!isMarshmallow()) return false
 
-        return activity().packageManager.isPermissionRevokedByPolicy(permission, activity().packageName)
+        return activity().packageManager.isPermissionRevokedByPolicy(
+            permission,
+            activity().packageName
+        )
     }
 
     /**
@@ -120,22 +91,4 @@ class PermissionsManagerDelegate(
      * @return true if OS is Android 6 or higher
      * */
     private fun isMarshmallow(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-
-    /**
-     * Generates request code between 1 and 65530
-     */
-    private fun generateRequestCode(): Int {
-        val result = REQUEST_CODE.getAndIncrement()
-        if (result >= 65530) {
-            REQUEST_CODE.set(1)
-        }
-
-        return result
-    }
-
-    private companion object {
-        private val REQUEST_CODE = AtomicInteger(1)
-        private val REQUEST_PERMISSION_MUTEX = Mutex()
-    }
-
 }

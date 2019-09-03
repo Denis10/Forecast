@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+private const val PERMISSIONS_REQUEST_LOCATION = 102
 private const val LOCATION_PERMISSION = Manifest.permission.ACCESS_FINE_LOCATION
 
 class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
@@ -61,24 +62,28 @@ class MainActivity : BaseActivity(), PermissionDialog.PermissionCallback {
         } else {
             requestPermissions()
         }
-    }
 
-    private fun requestPermissions() = launch {
-        permissionsManager.requestPermissions(LOCATION_PERMISSION).let {
-            when {
-                it.isShouldShowRequestPermissionRationale -> {
-                    withContext(Dispatchers.Main) {
-                        showEmptyView(true)
-                        PermissionDialog.newInstance()
-                            .show(supportFragmentManager, PermissionDialog::class.java.name)
+        launch {
+            permissionsManager.listenForCode(PERMISSIONS_REQUEST_LOCATION).let {
+                when {
+                    it.isShouldShowRequestPermissionRationale -> {
+                        withContext(Dispatchers.Main) {
+                            showEmptyView(true)
+                            PermissionDialog.newInstance()
+                                .show(supportFragmentManager, PermissionDialog::class.java.name)
+                        }
                     }
-                }
-                it.isAllGranted -> forecastViewModel.getForecast()
-                else -> withContext(Dispatchers.Main) {
-                    showEmptyView(true)
+                    it.isAllGranted -> forecastViewModel.getForecast()
+                    else -> withContext(Dispatchers.Main) {
+                        showEmptyView(true)
+                    }
                 }
             }
         }
+    }
+
+    private fun requestPermissions() {
+        permissionsManager.requestPermissions(PERMISSIONS_REQUEST_LOCATION, LOCATION_PERMISSION)
     }
 
     private fun showEmptyView(show: Boolean) {
