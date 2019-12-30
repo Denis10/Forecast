@@ -23,7 +23,8 @@ private const val FASTEST_INTERVAL = 5000L
 private const val LOCATION_EXPIRE_TIME: Long = 3600 * 1000
 private const val TIMEOUT = 60_000L
 
-class CurrentLocationServiceImpl @Inject constructor(private val context: Context) : CurrentLocationService {
+class CurrentLocationServiceImpl @Inject constructor(private val context: Context) :
+    CurrentLocationService {
 
     private val fusedLocationClient: FusedLocationProviderClient =
         LocationServices.getFusedLocationProviderClient(context)
@@ -53,8 +54,12 @@ class CurrentLocationServiceImpl @Inject constructor(private val context: Contex
             withTimeout(TIMEOUT) {
                 block.invoke(this)
             }
-        } catch (e: TimeoutCancellationException) {
-            throw ServiceError.NoLocationException(e)
+        } catch (e: Exception) {
+            if (e is TimeoutCancellationException) {
+                throw ServiceError.NoLocationException(e)
+            } else {
+                throw ServiceError.NoLocationException(e)
+            }
         }
     }
 
@@ -64,47 +69,45 @@ class CurrentLocationServiceImpl @Inject constructor(private val context: Contex
             Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-    private suspend fun getLastLocation(nullOnError: Boolean = true): Location? {
-        try {
-            return suspendCancellableCoroutine { coroutine ->
-                fusedLocationClient.lastLocation
-                    .addOnSuccessListener { location: Location? ->
-                        coroutine.resumeWith(Result.success(location))
-                    }
-                    .addOnFailureListener {
-                        if (nullOnError){
-                            coroutine.resumeWith(Result.success(null))
-                        } else {
-                            coroutine.resumeWithException(it)
-                        }
-                    }
-            }
-        } catch (e: Exception) {
-            throw ServiceError.NoLocationException(e)
-        }
-    }
-
-    private suspend fun requestLocation(): Location {
-        try {
-            return suspendCancellableCoroutine { coroutine ->
-                val locationCallback = object : LocationCallback() {
-                    override fun onLocationResult(locationResult: LocationResult?) {
-                        fusedLocationClient.removeLocationUpdates(this)
-                        locationResult ?: throw ServiceError.NoLocationException()
-                        if (locationResult.locations.isEmpty()) throw ServiceError.NoLocationException()
-
-                        coroutine.resumeWith(Result.success(locationResult.locations[0]))
-                        fusedLocationClient.removeLocationUpdates(this)
+    private suspend fun getLastLocation(nullOnError: Boolean = true): Location? =
+        suspendCancellableCoroutine { coroutine ->
+            fusedLocationClient.lastLocation
+                .addOnSuccessListener { location: Location? ->
+                    coroutine.resumeWith(Result.success(location))
+                }
+                .addOnFailureListener {
+                    if (nullOnError) {
+                        coroutine.resumeWith(Result.success(null))
+                    } else {
+                        coroutine.resumeWithException(it)
                     }
                 }
-                val request = LocationRequest()
-                request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-                request.interval = UPDATE_INTERVAL
-                request.fastestInterval = FASTEST_INTERVAL
-                fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
-            }
-        } catch (e: Exception) {
-            throw ServiceError.NoLocationException(e)
         }
+
+    private suspend fun requestLocation(): Location = suspendCancellableCoroutine { coroutine ->
+        val locationCallback = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+                fusedLocationClient.removeLocationUpdates(this)
+                locationResult ?: throw ServiceError.NoLocationException()
+                if (locationResult.locations.isEmpty()) throw ServiceError.NoLocationException()
+
+                coroutine.resumeWith(Result.success(locationResult.locations[0]))
+                fusedLocationClient.removeLocationUpdates(this)
+            }
+        }
+        val request = LocationRequest()
+        request.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        request.interval = UPDATE_INTERVAL
+        request.fastestInterval = FASTEST_INTERVAL
+        fusedLocationClient.requestLocationUpdates(
+            request,
+            locationCallback,
+            Looper.getMainLooper()
+        )
+            .addOnFailureListener {
+                coroutine.resumeWithException(it)
+            }
+
+        coroutine.invokeOnCancellation { fusedLocationClient.removeLocationUpdates(locationCallback) }
     }
 }
