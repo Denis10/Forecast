@@ -64,7 +64,7 @@ class CurrentLocationServiceImpl @Inject constructor(private val context: Contex
             Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-    private suspend fun getLastLocation(): Location? {
+    private suspend fun getLastLocation(nullOnError: Boolean = true): Location? {
         try {
             return suspendCancellableCoroutine { coroutine ->
                 fusedLocationClient.lastLocation
@@ -72,7 +72,11 @@ class CurrentLocationServiceImpl @Inject constructor(private val context: Contex
                         coroutine.resumeWith(Result.success(location))
                     }
                     .addOnFailureListener {
-                        coroutine.resumeWithException(it)
+                        if (nullOnError){
+                            coroutine.resumeWith(Result.success(null))
+                        } else {
+                            coroutine.resumeWithException(it)
+                        }
                     }
             }
         } catch (e: Exception) {
